@@ -10,6 +10,7 @@
 
 ### 2026-02-01
 
+- Added `test_revenue_examples.py` with comprehensive tests for revenue transaction fixtures, utilization data, weather impact on indoor/outdoor activities, and mock data generator determinism
 - Replaced markdown-based report with custom UI components
   - Added `/api/report/structured` endpoint returning JSON
   - Created ExecutiveSummary, WindWallSection, WeatherCorrelationSection, DeadZoneSection, FinancialImpactSection, and RecommendationsSection components

@@ -1,0 +1,153 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Translations
+*.mo
+*.pot
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre
+.pyre/
+
+# ruff
+.ruff_cache/
+
+# Local configuration
+*.local
+
+# Logs
+*.log
+logs/
+
+# Database
+*.db
+*.sqlite3
+
+# Static files (if generated)
+staticfiles/
+
+# Node / React Native / Expo
+node_modules/
+.expo/
+dist/
+web-build/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+.expo-shared/
+
+# macOS
+.DS_Store
+
+# npm
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Additional environment files
+.env.local
+.env.*.local
+.env.development
+.env.production
+.env.staging
+
+# Certificates and secrets
+*.pem
+*.crt
+*.cer
+*secret*
+*credential*
+*.secrets
+
+# Docker
+.docker/
+docker-compose.override.yml
+
+# Editor
+.history/
+*.code-workspace
+
+# OS
+Thumbs.db
+ehthumbs.db
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Expo (additional)
+eas.json

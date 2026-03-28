@@ -1,19 +1,24 @@
 import { ScrollView, StyleSheet } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 
-export default function ForecastScreen() {
+export default function LocationScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <ThemedView style={styles.header}>
-        <ThemedText type="title">Forecast</ThemedText>
-        <ThemedText type="default">Predicted dead zones based on upcoming weather</ThemedText>
+        <ThemedText type="title">Location Details</ThemedText>
+        <ThemedText type="defaultSemiBold">{id}</ThemedText>
       </ThemedView>
 
       <ThemedView style={styles.placeholder}>
         <ThemedText type="subtitle">Coming soon</ThemedText>
-        <ThemedText>Day-by-day risk view with weather-driven dead zone predictions.</ThemedText>
+        <ThemedText>
+          Per-facility dead zone breakdown, booking type performance, and weather sensitivity for this location.
+        </ThemedText>
       </ThemedView>
     </ScrollView>
   );

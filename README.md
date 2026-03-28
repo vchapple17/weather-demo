@@ -84,4 +84,4 @@ docker compose up
 
 **Designed by Valerie Chapple**
 
-All code in this project was written using [Claude Code](https://github.com/anthropics/claude-code), Anthropic's CLI tool for AI-assisted development. From project scaffolding to API design, React Native components, and this README - Claude wrote the code while I provided direction, feedback, and design decisions.
+All code in this project was written intentionally and exclusively using [Claude Code](https://github.com/anthropics/claude-code), Anthropic's CLI tool for AI-assisted development. From project scaffolding to API design, React Native components, and this README - Claude wrote the code while I provided direction, feedback, and design decisions.

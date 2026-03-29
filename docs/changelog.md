@@ -44,6 +44,13 @@
   - `data/mock/patterns.ts` — typed mock datasets for all charts
   - Charts: Wind Wall, Temperature Sweet Spot, Heat Index Penalty, Precipitation Impact, Monthly Seasonality, Day of Week, Hour×Day Heatmap
   - Hour×Day heatmap (14 hrs × 7 days) replaces simple hour-of-day bar chart; color-coded red→amber→green
+- Built Forecast screen (`app/(tabs)/index.tsx`) — fully interactive, decision-focused UI
+  - 7-day horizontal day picker with colored urgency dots (red = high priority, orange = medium)
+  - Full-width weather card with condition-based background color, large emoji + temperature, feels-like, and wind/rain/humidity/UV stats row
+  - Promotion opportunities section: slots sorted by urgency then revenue loss, each showing fill bar, reason (weather or behavioral), suggested discount %, and estimated revenue loss
+  - "All Clear" state when no promos needed for the selected day
+  - Collapsible full schedule showing every hour × booking type
+  - `data/mock/forecast.ts` — date-seeded deterministic generator producing 7 days of weather + predicted utilization, mirrors backend utilization pattern and weather-impact algorithms
 - Consolidated backend data layer — single source of truth for all mock data
   - `repositories/mock/locations.py` is now the only definition of `LOCATIONS`; `mock_data.py` imports from it
   - `MockWeatherRepository` replaces `MockDataGenerator.generate_mock_weather()` as the weather data source

@@ -29,6 +29,17 @@ npm install
 npx expo start
 ```
 
+## Forecast Screen
+
+The Forecast tab (`app/(tabs)/index.tsx`) is the primary decision tool:
+
+- **Day picker** — 7-day strip with urgency dots indicating days with at-risk slots
+- **Weather card** — color-coded by condition (rainy, hot, cold, windy, sunny) with full stats
+- **Promotion opportunities** — only at-risk slots, ranked by urgency, each with a plain-English reason and suggested discount range
+- **Full schedule** — collapsible view of all hours × booking types for the selected day
+
+Mock data in `data/mock/forecast.ts` uses a date-seeded RNG so each day renders consistently. The utilization patterns and weather-impact logic mirror the backend `MockDataGenerator` algorithms exactly.
+
 ## Charts
 
 Charts use [ECharts](https://echarts.apache.org/) via [`@wuba/react-native-echarts`](https://github.com/wuba/react-native-echarts) with the SVG renderer.

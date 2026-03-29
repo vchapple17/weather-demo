@@ -8,7 +8,7 @@ from typing import List
 
 from app.models.booking_type import BookingType
 from app.models.reservation import Location, Reservation, HourlyUtilization
-from app.data.mock_data import MockDataGenerator
+from app.data.mock_data import MockDataGenerator  # computation algorithms only; data from repos
 
 from .fixtures import (
     # Locations

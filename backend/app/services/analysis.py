@@ -8,7 +8,8 @@ from ..models.reservation import (
 )
 from ..models.weather import WeatherData, HourlyWeather, WeatherCorrelation, WindThreshold
 from ..config import settings
-from ..data.mock_data import mock_generator, LOCATIONS
+from ..data.mock_data import mock_generator
+from ..repositories import get_location_repo, get_weather_repo
 
 
 class AnalysisService:
@@ -17,14 +18,11 @@ class AnalysisService:
 
     def get_all_locations(self) -> List[Location]:
         """Get all golf facility locations."""
-        return LOCATIONS
+        return get_location_repo().list_all()
 
     def get_location(self, location_id: str) -> Optional[Location]:
         """Get a specific location by ID."""
-        for loc in LOCATIONS:
-            if loc.id == location_id:
-                return loc
-        return None
+        return get_location_repo().get_by_id(location_id)
 
     def _get_data_range(self) -> Tuple[datetime, datetime]:
         """Get the 6-month historical data range."""
@@ -51,41 +49,32 @@ class AnalysisService:
     ) -> List[DeadZone]:
         """Detect dead zones (low utilization periods) for location(s)."""
         start_date, end_date = self._get_data_range()
-        locations = [location] if location else LOCATIONS
+        locations = [location] if location else self.get_all_locations()
         dead_zones = []
 
         for loc in locations:
             utilization_data = self.get_utilization_data(loc, start_date, end_date)
 
-            # Get weather data for the location
             if weather_data is None:
-                weather = mock_generator.generate_mock_weather(loc, start_date, end_date)
-                weather_by_hour = {w["timestamp"]: w for w in weather}
+                weather_readings = get_weather_repo().list_by_range(loc.id, start_date, end_date)
+                weather_by_hour = {w.timestamp: w for w in weather_readings}
             else:
                 weather_by_hour = {hw.timestamp: hw for hw in weather_data.hourly_data}
 
             for util in utilization_data:
-                # Skip excluded hours (12AM - 6AM)
                 if settings.DEAD_ZONE_EXCLUDE_START_HOUR <= util.hour < settings.DEAD_ZONE_EXCLUDE_END_HOUR:
                     continue
 
-                # Check if it's a dead zone
                 if util.utilization_rate < settings.DEAD_ZONE_UTILIZATION_THRESHOLD:
-                    # Get weather for this hour
                     weather_hour = weather_by_hour.get(util.date)
 
                     weather_related = False
                     weather_condition = None
 
                     if weather_hour and util.booking_type.is_outdoor:
-                        if isinstance(weather_hour, dict):
-                            precip = weather_hour.get("precipitation_inches", 0)
-                            wind = weather_hour.get("wind_speed_mph", 0)
-                            temp = weather_hour.get("temperature_f", 70)
-                        else:
-                            precip = weather_hour.precipitation_inches
-                            wind = weather_hour.wind_speed_mph
-                            temp = weather_hour.temperature_f
+                        precip = weather_hour.precipitation_inches
+                        wind = weather_hour.wind_speed_mph
+                        temp = weather_hour.temperature_f
 
                         if precip > 0.1:
                             weather_related = True
@@ -122,20 +111,19 @@ class AnalysisService:
     ) -> List[WeatherCorrelation]:
         """Analyze correlation between weather and utilization."""
         start_date, end_date = self._get_data_range()
-        locations = [location] if location else LOCATIONS
+        locations = [location] if location else self.get_all_locations()
 
-        # Collect data points by booking type and weather condition
         data_points: Dict[str, Dict[str, List[float]]] = defaultdict(lambda: defaultdict(list))
         baseline_data: Dict[str, List[float]] = defaultdict(list)
 
         for loc in locations:
             utilization_data = self.get_utilization_data(loc, start_date, end_date)
-            weather = mock_generator.generate_mock_weather(loc, start_date, end_date)
-            weather_by_hour = {w["timestamp"]: w for w in weather}
+            weather_readings = get_weather_repo().list_by_range(loc.id, start_date, end_date)
+            weather_by_hour = {w.timestamp: w for w in weather_readings}
 
             for util in utilization_data:
                 if util.booking_type.is_indoor:
-                    continue  # Skip indoor for weather correlation
+                    continue
 
                 weather_hour = weather_by_hour.get(util.date)
                 if not weather_hour:
@@ -144,10 +132,9 @@ class AnalysisService:
                 booking_key = util.booking_type.value
                 baseline_data[booking_key].append(util.utilization_rate)
 
-                # Categorize weather
-                precip = weather_hour["precipitation_inches"]
-                wind = weather_hour["wind_speed_mph"]
-                temp = weather_hour["temperature_f"]
+                precip = weather_hour.precipitation_inches
+                wind = weather_hour.wind_speed_mph
+                temp = weather_hour.temperature_f
 
                 if precip > 0.1:
                     condition = "Rainy"
@@ -192,15 +179,14 @@ class AnalysisService:
     def find_wind_threshold(self, location: Location = None) -> List[WindThreshold]:
         """Find the 'Wind Wall' - MPH at which utilization collapses."""
         start_date, end_date = self._get_data_range()
-        locations = [location] if location else LOCATIONS
+        locations = [location] if location else self.get_all_locations()
 
-        # Collect utilization at different wind speeds
         wind_data: Dict[str, List[Tuple[float, float]]] = defaultdict(list)
 
         for loc in locations:
             utilization_data = self.get_utilization_data(loc, start_date, end_date)
-            weather = mock_generator.generate_mock_weather(loc, start_date, end_date)
-            weather_by_hour = {w["timestamp"]: w for w in weather}
+            weather_readings = get_weather_repo().list_by_range(loc.id, start_date, end_date)
+            weather_by_hour = {w.timestamp: w for w in weather_readings}
 
             for util in utilization_data:
                 if util.booking_type.is_indoor:
@@ -210,10 +196,9 @@ class AnalysisService:
                 if not weather_hour:
                     continue
 
-                # Only include non-rainy conditions to isolate wind effect
-                if weather_hour["precipitation_inches"] < 0.05:
+                if weather_hour.precipitation_inches < 0.05:
                     wind_data[util.booking_type.value].append(
-                        (weather_hour["wind_speed_mph"], util.utilization_rate)
+                        (weather_hour.wind_speed_mph, util.utilization_rate)
                     )
 
         # Find threshold for each outdoor booking type
@@ -253,20 +238,18 @@ class AnalysisService:
     def analyze_behavior_driven_dead_zones(self, location: Location = None) -> List[DeadZone]:
         """Find dead zones during perfect weather (behavior-driven, not weather-driven)."""
         start_date, end_date = self._get_data_range()
-        locations = [location] if location else LOCATIONS
+        locations = [location] if location else self.get_all_locations()
         behavior_dead_zones = []
 
         for loc in locations:
             utilization_data = self.get_utilization_data(loc, start_date, end_date)
-            weather = mock_generator.generate_mock_weather(loc, start_date, end_date)
-            weather_by_hour = {w["timestamp"]: w for w in weather}
+            weather_readings = get_weather_repo().list_by_range(loc.id, start_date, end_date)
+            weather_by_hour = {w.timestamp: w for w in weather_readings}
 
             for util in utilization_data:
-                # Skip excluded hours
                 if settings.DEAD_ZONE_EXCLUDE_START_HOUR <= util.hour < settings.DEAD_ZONE_EXCLUDE_END_HOUR:
                     continue
 
-                # Check if it's a dead zone
                 if util.utilization_rate >= settings.DEAD_ZONE_UTILIZATION_THRESHOLD:
                     continue
 
@@ -274,10 +257,9 @@ class AnalysisService:
                 if not weather_hour:
                     continue
 
-                # Check if weather was "perfect"
-                temp = weather_hour["temperature_f"]
-                wind = weather_hour["wind_speed_mph"]
-                precip = weather_hour["precipitation_inches"]
+                temp = weather_hour.temperature_f
+                wind = weather_hour.wind_speed_mph
+                precip = weather_hour.precipitation_inches
 
                 is_perfect = (
                     settings.PERFECT_TEMP_MIN <= temp <= settings.PERFECT_TEMP_MAX
@@ -394,7 +376,7 @@ class AnalysisService:
     def _chart_utilization_by_hour(self, location: Location = None) -> Dict:
         """Generate utilization by hour chart data."""
         start_date, end_date = self._get_data_range()
-        locations = [location] if location else LOCATIONS
+        locations = [location] if location else self.get_all_locations()
 
         hourly_data: Dict[int, List[float]] = defaultdict(list)
 
@@ -417,25 +399,25 @@ class AnalysisService:
     def _chart_wind_correlation(self, location: Location = None) -> Dict:
         """Generate wind correlation chart data."""
         start_date, end_date = self._get_data_range()
-        locations = [location] if location else LOCATIONS
+        locations = [location] if location else self.get_all_locations()
 
         wind_buckets = [(0, 5), (5, 10), (10, 15), (15, 20), (20, 25), (25, 100)]
         bucket_data: Dict[str, List[float]] = defaultdict(list)
 
         for loc in locations:
             utilization_data = self.get_utilization_data(loc, start_date, end_date)
-            weather = mock_generator.generate_mock_weather(loc, start_date, end_date)
-            weather_by_hour = {w["timestamp"]: w for w in weather}
+            weather_readings = get_weather_repo().list_by_range(loc.id, start_date, end_date)
+            weather_by_hour = {w.timestamp: w for w in weather_readings}
 
             for util in utilization_data:
                 if util.booking_type.is_indoor:
                     continue
 
                 weather_hour = weather_by_hour.get(util.date)
-                if not weather_hour or weather_hour["precipitation_inches"] > 0.05:
+                if not weather_hour or weather_hour.precipitation_inches > 0.05:
                     continue
 
-                wind = weather_hour["wind_speed_mph"]
+                wind = weather_hour.wind_speed_mph
                 for low, high in wind_buckets:
                     if low <= wind < high:
                         label = f"{low}-{high}" if high < 100 else f"{low}+"

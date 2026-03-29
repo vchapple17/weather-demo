@@ -33,6 +33,29 @@ npx expo start
 
 Charts use [ECharts](https://echarts.apache.org/) via [`@wuba/react-native-echarts`](https://github.com/wuba/react-native-echarts) with the SVG renderer.
 
+`components/charts/EChart.tsx` is a reusable wrapper that handles init, setOption, and dispose — pass any ECharts option object as a prop.
+
+### Patterns Screen Charts
+
+| # | Chart | Type | Business Question |
+|---|-------|------|-------------------|
+| 1 | Wind Wall Effect | Line + area | At what wind speed do bookings collapse? |
+| 2 | Temperature Sweet Spot | Color-coded bar | Which temp range drives the most bookings? |
+| 3 | Heat Index Penalty | Horizontal bar | How much does humidity amplify heat impact? |
+| 4 | Precipitation Impact | Color-coded bar | How fast does rain kill utilization? |
+| 5 | Monthly Seasonality | Bar + line overlay | Which months under/overprice demand? |
+| 6 | Day of Week Pattern | Bar + line overlay | Which weekdays have untapped capacity? |
+| 7 | Hour × Day Heatmap | Heatmap (14h × 7d) | When exactly are the dead zones each week? |
+
+Mock data lives in `data/mock/patterns.ts` — shaped to mirror the real API response for easy swap-in.
+
+## Data Models
+
+TypeScript types in `types/`:
+- `location.ts` — `Location`, `BookingType`, `Amenity`
+- `booking.ts` — `Booking`, `Player`, `CartSelection`, `BookingPricing`, `ContactInfo`
+- `weather.ts` — `WeatherReading`, `DailyWeatherSummary`, `PrecipitationType`
+
 ## Metro Config
 
 `metro.config.js` includes two fixes required for ECharts compatibility:

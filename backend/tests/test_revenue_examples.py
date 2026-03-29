@@ -172,23 +172,21 @@ class TestDynamicGeneratorWithSeed:
     """Tests using the dynamic generator with fixed seeds for reproducibility."""
 
     def test_seeded_generator_is_deterministic(self, test_location):
-        """Same seed should produce identical results when used immediately."""
-        from app.data.mock_data import MockDataGenerator
+        """Same seed should produce identical results from the weather repository."""
+        from app.repositories.mock.weather import MockWeatherRepository
 
         start = datetime(2024, 7, 1)
         end = datetime(2024, 7, 2)
 
-        # Generate with first seeded instance
-        gen1 = MockDataGenerator(seed=123)
-        weather1 = gen1.generate_mock_weather(test_location, start, end)
+        repo1 = MockWeatherRepository(seed=123)
+        weather1 = repo1.list_by_range(test_location.id, start, end)
 
-        # Generate with fresh seeded instance
-        gen2 = MockDataGenerator(seed=123)
-        weather2 = gen2.generate_mock_weather(test_location, start, end)
+        repo2 = MockWeatherRepository(seed=123)
+        weather2 = repo2.list_by_range(test_location.id, start, end)
 
         assert len(weather1) == len(weather2)
         for w1, w2 in zip(weather1, weather2):
-            assert w1["temperature_f"] == w2["temperature_f"]
+            assert w1.temperature_f == w2.temperature_f
 
     @pytest.mark.parametrize("seed", [1, 42, 100, 999])
     def test_revenue_never_negative(self, seed, test_location):
